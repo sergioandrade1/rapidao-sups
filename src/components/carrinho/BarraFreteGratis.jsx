@@ -8,7 +8,7 @@ export default function BarraFreteGratis({ falta, progresso, atingiu }) {
       <div className="mb-2 flex items-center gap-2 text-sm">
         <Truck size={18} className={atingiu ? "text-zap" : "text-amarelo"} />
         {atingiu ? (
-          <span className="font-bold text-zap">Você ganhou frete grátis! 🎉</span>
+          <span className="font-bold text-zap">Frete grátis liberado</span>
         ) : (
           <span>
             Faltam <strong className="text-amarelo">{brl(falta)}</strong> para o frete grátis

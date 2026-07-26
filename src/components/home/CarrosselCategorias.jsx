@@ -1,12 +1,9 @@
 import { Link } from "react-router-dom";
 import Carrossel from "../ui/Carrossel";
+import IconeCategoria from "../ui/IconeCategoria";
 import { categorias } from "../../data/categorias";
 
-/**
- * Todas as categorias num trilho horizontal, no formato da loja atual
- * (tile circular + rótulo embaixo). Sem fotos: o emoji sobre o círculo grafite
- * mantém a leitura escura da marca e não depende de asset externo.
- */
+/** Todas as categorias num trilho horizontal: tile circular + rótulo embaixo. */
 export default function CarrosselCategorias() {
   return (
     <section className="container-site py-10">
@@ -24,8 +21,8 @@ export default function CarrosselCategorias() {
             to={`/c/${c.slug}`}
             className="group flex w-24 shrink-0 snap-start flex-col items-center gap-2 sm:w-28"
           >
-            <div className="flex size-20 items-center justify-center rounded-full border-2 border-borda bg-grafite-card text-3xl transition-all duration-200 group-hover:-translate-y-1 group-hover:border-amarelo group-hover:bg-grafite-hover sm:size-24 sm:text-4xl">
-              {c.emoji}
+            <div className="flex size-20 items-center justify-center rounded-full border-2 border-borda bg-grafite-card text-neutral-400 transition-all duration-200 group-hover:-translate-y-1 group-hover:border-amarelo group-hover:bg-grafite-hover group-hover:text-amarelo sm:size-24">
+              <IconeCategoria slug={c.slug} size={30} />
             </div>
             <span className="text-center text-[12px] font-bold leading-tight text-neutral-300 transition-colors group-hover:text-amarelo">
               {c.nome}

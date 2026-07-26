@@ -12,10 +12,10 @@ export default function AreaAtuacao() {
   return (
     <div className="container-site py-10">
       <h1 className="titulo-secao mb-2">
-        Área de atuação <span className="text-amarelo">📍</span>
+        Área de atuação
       </h1>
       <p className="mb-8 max-w-2xl text-texto-suave">
-        {CHAMADAS.entrega}. {CHAMADAS.ritmo} 🛵💨
+        {CHAMADAS.entrega}. {CHAMADAS.ritmo}.
       </p>
 
       <div className="mb-10 grid gap-4 sm:grid-cols-3">

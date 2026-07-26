@@ -95,7 +95,7 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-borda-sutil px-5 py-4 text-center text-xs text-texto-tenue">
-        © 2026 {LOJA.nome} · {LOJA.cidade} · Feito com ⚡ em Recife-PE
+        © 2026 {LOJA.nome} · {LOJA.cidade}
       </div>
     </footer>
   );

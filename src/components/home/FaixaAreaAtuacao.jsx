@@ -23,7 +23,7 @@ export default function FaixaAreaAtuacao() {
             ))}
           </div>
           <p className="mt-3 text-[13px] text-texto-fraco">
-            Rápido, prático e seguro 🛵💨 — entregamos em toda a região metropolitana do Recife.
+            Rápido, prático e seguro — entregamos em toda a região metropolitana do Recife.
           </p>
         </div>
 

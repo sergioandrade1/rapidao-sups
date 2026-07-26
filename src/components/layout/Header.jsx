@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Menu, Search, ShoppingCart, User, X } from "lucide-react";
+import { MapPin, Menu, Search, ShoppingCart, User, X } from "lucide-react";
+import IconeCategoria from "../ui/IconeCategoria";
 import Logo from "./Logo";
 import VitrineNav from "./VitrineNav";
 import { categorias } from "../../data/categorias";
@@ -110,7 +111,7 @@ export default function Header() {
                 onClick={() => setMenuAberto(false)}
                 className="flex items-center gap-3 border-b border-borda-sutil py-3 text-sm font-semibold text-neutral-200 hover:text-amarelo"
               >
-                <span className="text-lg">{c.emoji}</span>
+                <IconeCategoria slug={c.slug} size={18} className="shrink-0 text-amarelo" />
                 {c.nome}
               </Link>
             ))}
@@ -119,7 +120,8 @@ export default function Header() {
               onClick={() => setMenuAberto(false)}
               className="flex items-center gap-3 py-3 text-sm font-semibold text-amarelo"
             >
-              📍 Área de atuação
+              <MapPin size={18} className="shrink-0" />
+              Área de atuação
             </Link>
           </div>
         </div>

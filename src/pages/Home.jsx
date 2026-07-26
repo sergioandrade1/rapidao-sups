@@ -43,7 +43,6 @@ export default function Home() {
 
       <SecaoProdutos
         titulo="Promoções"
-        emoji="🏷️"
         verTodos="/v/promocoes"
         produtos={promocoes.dados}
         carregando={promocoes.carregando}
@@ -52,7 +51,6 @@ export default function Home() {
 
       <SecaoProdutos
         titulo="Mais vendidos"
-        emoji="🔥"
         verTodos="/v/top-20"
         produtos={maisVendidos.dados}
         carregando={maisVendidos.carregando}

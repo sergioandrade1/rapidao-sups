@@ -12,13 +12,15 @@
  *  - `aplicar`: a mesma regra como consulta, para o banco filtrar no servidor
  *    em vez de trazer o catálogo inteiro e descartar no navegador.
  */
+import { Boxes, Package, Sparkles, Tag, Trophy, Truck } from "lucide-react";
+
 export const vitrines = [
   {
     slug: "kits-promocionais",
     nome: "Kits Promocionais",
     titulo: "Kits e combos promocionais",
     subtitulo: "Mais produto, menos por unidade. O melhor custo-benefício da loja.",
-    emoji: "📦",
+    Icone: Package,
     filtro: (p) => p.categoria === "packs" || /combo|2x/i.test(p.nome),
     aplicar: (q) => q.or("categoria_slug.eq.packs,nome.ilike.%combo%,nome.ilike.%2x %"),
   },
@@ -27,7 +29,7 @@ export const vitrines = [
     nome: "Top 20",
     titulo: "Top 20 mais vendidos",
     subtitulo: "O que mais sai em Recife e região.",
-    emoji: "🏆",
+    Icone: Trophy,
     limite: 20,
     filtro: (p) => p.mais_vendido || p.destaque || p.tag === "MAIS VENDIDO",
     aplicar: (q) => q.or("mais_vendido.is.true,destaque.is.true,tag.eq.MAIS VENDIDO"),
@@ -37,7 +39,7 @@ export const vitrines = [
     nome: "Promoções",
     titulo: "Promoções",
     subtitulo: "Tudo com desconto, do maior pro menor.",
-    emoji: "🏷️",
+    Icone: Tag,
     destaque: true, // pintada de amarelo na barra
     filtro: (p) => p.preco_de_centavos && p.preco_de_centavos > p.preco_centavos,
     aplicar: (q) => q.not("preco_de_centavos", "is", null),
@@ -50,7 +52,7 @@ export const vitrines = [
     nome: "Frete Grátis",
     titulo: "Produtos com frete grátis",
     subtitulo: "Acima de R$ 89,99 a entrega é por nossa conta.",
-    emoji: "🚚",
+    Icone: Truck,
     filtro: (p) => p.preco_centavos >= 8999,
     aplicar: (q) => q.gte("preco_centavos", 8999),
   },
@@ -59,7 +61,7 @@ export const vitrines = [
     nome: "Novidades",
     titulo: "Chegou agora",
     subtitulo: "Os lançamentos mais recentes no estoque.",
-    emoji: "✨",
+    Icone: Sparkles,
     filtro: (p) => p.tag === "NOVIDADE",
     aplicar: (q) => q.eq("tag", "NOVIDADE"),
   },
@@ -68,7 +70,7 @@ export const vitrines = [
     nome: "Até R$ 50",
     titulo: "Tudo até R$ 50",
     subtitulo: "Pra completar o pedido e chegar no frete grátis.",
-    emoji: "💰",
+    Icone: Boxes,
     filtro: (p) => p.preco_centavos <= 5000,
     aplicar: (q) => q.lte("preco_centavos", 5000),
   },

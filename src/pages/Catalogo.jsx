@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { SlidersHorizontal, X } from "lucide-react";
 import GridProdutos from "../components/produto/GridProdutos";
 import FiltrosCatalogo from "../components/catalogo/FiltrosCatalogo";
+import IconeCategoria from "../components/ui/IconeCategoria";
 import { useAsync } from "../hooks/useAsync";
 import { useTitulo } from "../hooks/useTitulo";
 import { listarProdutos } from "../services/produtos";
@@ -102,9 +103,13 @@ export default function Catalogo() {
     <div className="container-site py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="titulo-secao">
-            {(vitrine?.emoji || categoria?.emoji) && (
-              <span className="mr-1">{vitrine?.emoji ?? categoria.emoji}</span>
+          <h1 className="titulo-secao flex items-center gap-2">
+            {vitrine ? (
+              <vitrine.Icone size={24} className="shrink-0 text-amarelo" aria-hidden="true" />
+            ) : (
+              categoria && (
+                <IconeCategoria slug={categoria.slug} size={24} className="shrink-0 text-amarelo" />
+              )
             )}
             {titulo}
           </h1>

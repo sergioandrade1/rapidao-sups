@@ -24,7 +24,7 @@ export default function Hero() {
 
           <p className="mt-4 max-w-105 text-[15px] leading-relaxed text-texto-suave sm:text-base">
             Suplementos <strong className="text-texto">100% originais</strong> com a entrega mais
-            rápida da região. Rápido, prático e seguro 🛵💨
+            rápida da região. Rápido, prático e seguro.
           </p>
 
           <div className="mt-7 flex flex-wrap gap-3">
@@ -32,7 +32,7 @@ export default function Hero() {
               Comprar agora
             </Link>
             <Link to="/v/promocoes" className="btn-secundario px-7 py-4 text-[15px]">
-              Ver ofertas 🔥
+              Ver ofertas
             </Link>
           </div>
         </div>

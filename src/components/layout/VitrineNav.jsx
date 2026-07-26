@@ -26,9 +26,9 @@ export default function VitrineNav() {
           <NavLink
             key={v.slug}
             to={`/v/${v.slug}`}
-            className={(estado) => classe(estado, v.destaque)}
+            className={(estado) => `${classe(estado, v.destaque)} inline-flex items-center gap-1.5`}
           >
-            <span className="mr-1">{v.emoji}</span>
+            <v.Icone size={14} strokeWidth={2} aria-hidden="true" />
             {v.nome}
           </NavLink>
         ))}
