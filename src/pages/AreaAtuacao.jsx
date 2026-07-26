@@ -52,14 +52,20 @@ export default function AreaAtuacao() {
         <p className="mb-4 text-sm text-texto-suave">
           Chama no WhatsApp que a gente verifica a entrega no seu endereço.
         </p>
-        <a
-          href={`https://wa.me/${LOJA.whatsapp}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-lg bg-zap px-6 py-3 text-sm font-extrabold text-white transition-colors hover:bg-zap-escuro"
-        >
-          Falar no WhatsApp · {LOJA.whatsappExibicao}
-        </a>
+        {LOJA.whatsapp ? (
+          <a
+            href={`https://wa.me/${LOJA.whatsapp}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg bg-zap px-6 py-3 text-sm font-extrabold text-white transition-colors hover:bg-zap-escuro"
+          >
+            Falar no WhatsApp · {LOJA.whatsappExibicao}
+          </a>
+        ) : (
+          <span className="inline-flex items-center gap-2 rounded-lg bg-zap/30 px-6 py-3 text-sm font-extrabold text-texto-suave">
+            {LOJA.whatsappExibicao}
+          </span>
+        )}
       </div>
 
       <Link to="/produtos" className="mt-8 inline-block font-bold text-amarelo hover:underline">

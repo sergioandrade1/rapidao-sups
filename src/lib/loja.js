@@ -5,13 +5,23 @@
  * que mudar horário de corte ou incluir uma cidade seja uma edição só.
  */
 
+/**
+ * Ambiente de teste: desliga o contato real.
+ *
+ * Enquanto o site estiver publicado só para avaliação, os botões de WhatsApp
+ * não podem abrir conversa com a loja — senão alguém manda pedido por um site
+ * incompleto. Não usamos número fictício: um número inventado pode ser de uma
+ * pessoa de verdade. Trocar para `false` no lançamento.
+ */
+export const MODO_TESTE = true;
+
 export const LOJA = {
   nome: "Rapidão Suplementos",
   responsavel: "Fernando Henrique",
   cidade: "Recife - PE",
-  whatsapp: "5581984372495",
-  whatsappExibicao: "(81) 98437-2495",
-  linktree: "https://linktr.ee/Rapidaosuplementos",
+  whatsapp: MODO_TESTE ? null : "5581984372495",
+  whatsappExibicao: MODO_TESTE ? "WhatsApp em breve" : "(81) 98437-2495",
+  linktree: MODO_TESTE ? null : "https://linktr.ee/Rapidaosuplementos",
 };
 
 /** Horário de corte para entrega no mesmo dia. */

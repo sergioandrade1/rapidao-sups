@@ -45,14 +45,20 @@ export default function Footer() {
               {h}
             </div>
           ))}
-          <a
-            href={`https://wa.me/${LOJA.whatsapp}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="py-1 text-[13px] font-bold text-zap hover:underline"
-          >
-            WhatsApp: {LOJA.whatsappExibicao}
-          </a>
+          {LOJA.whatsapp ? (
+            <a
+              href={`https://wa.me/${LOJA.whatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-1 text-[13px] font-bold text-zap hover:underline"
+            >
+              WhatsApp: {LOJA.whatsappExibicao}
+            </a>
+          ) : (
+            <span className="py-1 text-[13px] font-bold text-texto-fraco">
+              {LOJA.whatsappExibicao}
+            </span>
+          )}
 
           <div className="mt-3 flex flex-col gap-1">
             {INSTITUCIONAL.map((l) => (
@@ -75,14 +81,16 @@ export default function Footer() {
               </span>
             ))}
           </div>
-          <a
-            href={LOJA.linktree}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-block text-[13px] text-texto-suave hover:text-amarelo"
-          >
-            Nossas redes sociais →
-          </a>
+          {LOJA.linktree && (
+            <a
+              href={LOJA.linktree}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-block text-[13px] text-texto-suave hover:text-amarelo"
+            >
+              Nossas redes sociais →
+            </a>
+          )}
         </div>
       </div>
 
