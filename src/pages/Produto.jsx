@@ -49,7 +49,14 @@ export default function Produto() {
 
   if (!produto) return <NaoEncontrada />;
 
-  const variante = produto.variantes.find((v) => v.id === varianteId) ?? produto.variantes[0] ?? null;
+  // Sem escolha do cliente, abre no primeiro sabor COM estoque. Cair no
+  // primeiro da lista fazia a página anunciar "Indisponível" mesmo havendo
+  // outros sabores à venda.
+  const variante =
+    produto.variantes.find((v) => v.id === varianteId) ??
+    produto.variantes.find((v) => v.estoque > 0) ??
+    produto.variantes[0] ??
+    null;
   const desconto = percentualDesconto(produto.preco_de_centavos, produto.preco_centavos);
   const estoque = variante ? variante.estoque : produto.estoque;
   const indisponivel = estoque === 0;
