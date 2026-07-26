@@ -9,6 +9,7 @@ import EtapaPagamento from "../components/checkout/EtapaPagamento";
 import EtapaRevisao from "../components/checkout/EtapaRevisao";
 import { useCarrinho } from "../context/CarrinhoContext";
 import { useTitulo } from "../hooks/useTitulo";
+import { criarPedido } from "../services/pedidos";
 import { brl } from "../lib/formato";
 import {
   calcularTotais,
@@ -55,7 +56,9 @@ export default function Checkout() {
   const [passo, setPasso] = useState(0);
   const [dados, setDados] = useState(rascunhoInicial);
   const [erros, setErros] = useState({});
-  const [concluido, setConcluido] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [falha, setFalha] = useState(null);
+  const [pedido, setPedido] = useState(null);
   const topo = useRef(null);
 
   const { total } = calcularTotais(subtotal);
@@ -100,30 +103,60 @@ export default function Checkout() {
     else finalizar();
   }
 
-  function finalizar() {
-    // Aqui entra o `insert` na tabela `pedidos` quando o backend existir.
-    // Por ora o checkout é layout: confirma na tela e esvazia o carrinho.
-    setConcluido(true);
-    limpar();
+  async function finalizar() {
+    setEnviando(true);
+    setFalha(null);
+
+    try {
+      const resultado = await criarPedido(dados, itens);
+      setPedido(resultado);
+      limpar();
+      // O rascunho some junto: manter endereço salvo depois do pedido feito
+      // faria o próximo checkout começar com dados possivelmente velhos.
+      try {
+        localStorage.removeItem(CHAVE_RASCUNHO);
+      } catch {
+        /* storage indisponível: nada a limpar */
+      }
+    } catch (e) {
+      setFalha(e.message);
+    } finally {
+      setEnviando(false);
+    }
   }
 
   /* ------------------------------ estados de saída ------------------------------ */
 
-  if (concluido) {
+  if (pedido) {
     return (
       <div className="container-site flex flex-col items-center gap-4 py-20 text-center">
         <div className="flex size-16 items-center justify-center rounded-full bg-zap">
           <Check size={32} strokeWidth={3} className="text-white" />
         </div>
-        <h1 className="titulo-secao">Pedido registrado</h1>
+
+        <h1 className="titulo-secao">Pedido recebido</h1>
+
+        <p className="rounded-lg border border-amarelo bg-amarelo/10 px-5 py-2.5 text-lg font-black tracking-wider text-amarelo">
+          {pedido.numero}
+        </p>
+
         <p className="max-w-md text-sm text-texto-suave">
-          Obrigado, {dados.nome.split(" ")[0]}! Em breve a loja confirma tudo pelo WhatsApp{" "}
-          {dados.telefone}.
+          Obrigado, {dados.nome.split(" ")[0]}! Guarde esse número — é por ele que a loja localiza
+          seu pedido. A confirmação chega no WhatsApp {dados.telefone}.
         </p>
-        <p className="max-w-md rounded-lg border border-borda bg-grafite-card px-4 py-3 text-xs text-texto-fraco">
-          Esta tela ainda não envia o pedido de verdade — o registro no banco e o aviso à loja
-          entram na próxima etapa do projeto.
-        </p>
+
+        {pedido.total_centavos && (
+          <p className="text-sm">
+            Total: <strong className="text-amarelo">{brl(pedido.total_centavos)}</strong>
+          </p>
+        )}
+
+        {pedido.simulado && (
+          <p className="max-w-md rounded-lg border border-borda bg-grafite-card px-4 py-3 text-xs text-texto-fraco">
+            Banco não configurado neste ambiente: número de exemplo, pedido não gravado.
+          </p>
+        )}
+
         <Link to="/produtos" className="btn-primario mt-2">
           Voltar às compras
         </Link>
@@ -181,8 +214,25 @@ export default function Checkout() {
             )}
             {passo === 3 && <EtapaRevisao dados={dados} aoVoltarPara={setPasso} />}
 
-            <button type="submit" className="btn-primario mt-6 w-full py-3.5">
-              {ultimo ? `Confirmar pedido · ${brl(total)}` : "Continuar"}
+            {falha && (
+              <p
+                role="alert"
+                className="mt-4 rounded-lg border border-alerta bg-alerta/10 px-4 py-3 text-sm font-semibold text-alerta"
+              >
+                {falha}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={enviando}
+              className="btn-primario mt-6 w-full py-3.5 disabled:cursor-wait disabled:bg-neutral-700 disabled:text-neutral-400"
+            >
+              {enviando
+                ? "Enviando..."
+                : ultimo
+                  ? `Confirmar pedido · ${brl(total)}`
+                  : "Continuar"}
             </button>
           </form>
         </div>

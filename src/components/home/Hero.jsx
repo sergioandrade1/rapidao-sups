@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Zap } from "lucide-react";
 import SeloEntrega from "./SeloEntrega";
+import SeloEntregaCompacto from "./SeloEntregaCompacto";
 
 export default function Hero() {
   return (
@@ -13,6 +14,9 @@ export default function Hero() {
               DELIVERY DE SUPLEMENTOS · RECIFE E REGIÃO
             </span>
           </div>
+
+          {/* No celular o contador aparece aqui, em faixa; no desktop, no selo */}
+          <SeloEntregaCompacto />
 
           <h1 className="text-[40px] font-black italic leading-[0.95] tracking-[-0.03em] sm:text-5xl lg:text-[52px]">
             PEDIU ATÉ
