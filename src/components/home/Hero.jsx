@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Zap } from "lucide-react";
+import SeloEntrega from "./SeloEntrega";
 
 export default function Hero() {
   return (
@@ -36,17 +37,9 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Selo circular "18H · entrega hoje" */}
+        {/* Selo com contagem regressiva até o corte */}
         <div className="hidden flex-1 basis-[300px] justify-center sm:flex">
-          <div className="flex size-70 items-center justify-center rounded-full bg-[conic-gradient(#FFC800,#ff6b00,#FFC800)] shadow-[0_0_60px_#ffc80033]">
-            <div className="flex size-[88%] flex-col items-center justify-center gap-2 rounded-full bg-preto-header">
-              <Zap size={70} className="fill-amarelo text-amarelo" />
-              <span className="text-4xl font-black italic">18:00</span>
-              <span className="text-[13px] font-extrabold tracking-widest text-amarelo">
-                ENTREGA HOJE
-              </span>
-            </div>
-          </div>
+          <SeloEntrega />
         </div>
       </div>
     </section>
