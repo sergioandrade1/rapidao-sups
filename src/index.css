@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------
+   Design tokens — Rapidão Suplementos
+   Extraídos do protótipo original em inline styles.
+   --------------------------------------------------------------- */
+@theme {
+  /* Superfícies */
+  --color-grafite: #141414; /* fundo da página */
+  --color-grafite-card: #1e1e1e; /* cards e superfícies elevadas */
+  --color-grafite-hover: #242424; /* superfície em hover */
+  --color-preto-header: #0d0d0d; /* header, hero, footer interno */
+  --color-preto-fundo: #0a0a0a; /* faixas, nav de categorias */
+  --color-preto-poco: #080808; /* mock de imagem de produto */
+
+  /* Bordas */
+  --color-borda: #262626;
+  --color-borda-clara: #2e2e2e;
+  --color-borda-sutil: #1c1c1c;
+
+  /* Marca */
+  --color-amarelo: #ffc800;
+  --color-amarelo-escuro: #e5a800;
+  --color-zap: #25d366; /* PIX e WhatsApp */
+  --color-zap-escuro: #1da851;
+  --color-alerta: #ff3b3b; /* badge de desconto */
+
+  /* Texto */
+  --color-texto: #ffffff;
+  --color-texto-suave: #aaaaaa;
+  --color-texto-fraco: #888888;
+  --color-texto-tenue: #666666;
+
+  /* Tipografia */
+  --font-sans: "Barlow", "Segoe UI", system-ui, sans-serif;
+
+  /* Largura do container padrão do layout */
+  --container-site: 1200px;
+}
+
+@layer base {
+  body {
+    @apply bg-grafite text-texto font-sans antialiased;
+  }
+
+  /* Foco visível consistente — acessibilidade em todo o site */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-amarelo;
+  }
+}
+
+@layer components {
+  /* Container horizontal usado por header, seções e footer */
+  .container-site {
+    @apply mx-auto w-full max-w-site px-4 sm:px-5;
+  }
+
+  /* CTA principal amarelo */
+  .btn-primario {
+    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg
+           bg-amarelo px-6 py-3 text-sm font-extrabold uppercase tracking-wide
+           text-black transition-colors hover:bg-amarelo-escuro;
+  }
+
+  /* CTA secundário, contorno */
+  .btn-secundario {
+    @apply inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg
+           border border-neutral-700 bg-transparent px-6 py-3 text-sm font-bold
+           text-texto transition-colors hover:border-amarelo hover:text-amarelo;
+  }
+
+  /* Superfície de card padrão, com realce amarelo no hover */
+  .card-superficie {
+    @apply rounded-xl border border-borda bg-grafite-card transition-all duration-200;
+  }
+
+  /* Título de seção: itálico, black, uppercase — assinatura da marca */
+  .titulo-secao {
+    @apply text-2xl font-black uppercase italic tracking-tight sm:text-[26px];
+  }
+}
+
+/* Scrollbar discreta na nav de categorias (mobile) */
+@utility scrollbar-oculta {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
