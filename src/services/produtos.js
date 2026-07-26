@@ -1,130 +1,210 @@
 /**
  * Fronteira de dados de produtos.
  *
- * Nenhuma página importa `data/` diretamente — tudo passa por aqui. Hoje as
- * funções resolvem em cima do mock, mas já são assíncronas, então a UI já lida
- * com loading e erro de verdade. Quando o Supabase entrar, só o corpo destas
- * funções muda; nenhuma tela é tocada.
+ * Nenhuma página importa `data/` diretamente — tudo passa por aqui. Quando há
+ * Supabase configurado, as funções consultam o banco; sem credenciais, caem no
+ * catálogo local. O formato devolvido é idêntico nos dois casos, então as telas
+ * não sabem (nem precisam saber) de onde veio o dado.
  */
-import { produtos, marcas } from "../data/produtos";
-import { categorias } from "../data/categorias";
+import { supabase, temSupabase } from "../lib/supabase";
+import * as local from "./produtosLocal";
 import { acharVitrine } from "../data/vitrines";
 
-/** Latência simulada, para que os estados de loading sejam exercitados. */
-const ATRASO_MS = 250;
+/** Colunas + relações. O mesmo shape que a UI já consumia do mock. */
+const SELECT = `
+  id, slug, nome, marca, categoria_slug, preco_centavos, preco_de_centavos,
+  tag, nota, avaliacoes, estoque, destaque, mais_vendido,
+  produto_imagens ( url, ordem ),
+  produto_variantes ( id, rotulo, preco_centavos, estoque )
+`;
 
-function responder(valor) {
-  return new Promise((resolve) => setTimeout(() => resolve(valor), ATRASO_MS));
+/** Linha do banco -> objeto que as telas esperam. */
+function paraProduto(linha) {
+  if (!linha) return null;
+
+  const imagens = (linha.produto_imagens ?? [])
+    .slice()
+    .sort((a, b) => a.ordem - b.ordem)
+    .map((i) => i.url);
+
+  return {
+    id: linha.id,
+    slug: linha.slug,
+    nome: linha.nome,
+    marca: linha.marca,
+    categoria: linha.categoria_slug,
+    preco_centavos: linha.preco_centavos,
+    preco_de_centavos: linha.preco_de_centavos,
+    tag: linha.tag,
+    nota: linha.nota,
+    avaliacoes: linha.avaliacoes,
+    estoque: linha.estoque,
+    destaque: linha.destaque,
+    mais_vendido: linha.mais_vendido,
+    imagens,
+    variantes: (linha.produto_variantes ?? []).map((v) => ({
+      id: v.id,
+      rotulo: v.rotulo,
+      preco_centavos: v.preco_centavos,
+      estoque: v.estoque,
+    })),
+  };
 }
 
-function normalizar(texto) {
-  return texto
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
+/** Erro do Supabase vira exceção, para o useAsync mostrar o estado de erro. */
+function conferir({ data, error }) {
+  if (error) throw new Error(error.message);
+  return data;
 }
 
-/**
- * Lista produtos com filtros opcionais.
- * @param {object} filtros
- * @param {string} [filtros.categoria] slug da categoria
- * @param {string[]} [filtros.marcas] marcas selecionadas
- * @param {number} [filtros.precoMin] centavos
- * @param {number} [filtros.precoMax] centavos
- * @param {string} [filtros.busca] termo livre
- * @param {'relevancia'|'menor-preco'|'maior-preco'|'nome'} [filtros.ordem]
- */
 export async function listarProdutos(filtros = {}) {
+  if (!temSupabase) return local.listarProdutos(filtros);
+
   const { categoria, vitrine, marcas: marcasSel, precoMin, precoMax, busca, ordem } = filtros;
 
-  let lista = [...produtos];
+  let q = supabase.from("produtos").select(SELECT).eq("ativo", true);
 
-  if (categoria) lista = lista.filter((p) => p.categoria === categoria);
-
-  // Vitrine aplica sua própria regra de curadoria antes dos filtros do usuário.
-  if (vitrine) {
-    const v = acharVitrine(vitrine);
-    if (!v) return responder([]);
-    lista = lista.filter(v.filtro);
-    if (v.ordenar) lista.sort(v.ordenar);
-    if (v.limite) lista = lista.slice(0, v.limite);
-  }
-
-  if (marcasSel?.length) lista = lista.filter((p) => marcasSel.includes(p.marca));
-
-  if (precoMin != null) lista = lista.filter((p) => p.preco_centavos >= precoMin);
-  if (precoMax != null) lista = lista.filter((p) => p.preco_centavos <= precoMax);
+  if (categoria) q = q.eq("categoria_slug", categoria);
+  if (marcasSel?.length) q = q.in("marca", marcasSel);
+  if (precoMin != null) q = q.gte("preco_centavos", precoMin);
+  if (precoMax != null) q = q.lte("preco_centavos", precoMax);
 
   if (busca?.trim()) {
-    const termo = normalizar(busca.trim());
-    lista = lista.filter(
-      (p) => normalizar(p.nome).includes(termo) || normalizar(p.marca).includes(termo)
-    );
+    const termo = busca.trim();
+    q = q.or(`nome.ilike.%${termo}%,marca.ilike.%${termo}%`);
   }
+
+  const v = vitrine ? acharVitrine(vitrine) : null;
+  if (vitrine && !v) return [];
+  if (v?.aplicar) q = v.aplicar(q);
 
   switch (ordem) {
     case "menor-preco":
-      lista.sort((a, b) => a.preco_centavos - b.preco_centavos);
+      q = q.order("preco_centavos", { ascending: true });
       break;
     case "maior-preco":
-      lista.sort((a, b) => b.preco_centavos - a.preco_centavos);
+      q = q.order("preco_centavos", { ascending: false });
       break;
     case "nome":
-      lista.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+      q = q.order("nome", { ascending: true });
       break;
     default:
-      break; // relevância = ordem natural do catálogo
+      q = q.order("id", { ascending: true });
   }
 
-  return responder(lista);
+  if (v?.limite) q = q.limit(v.limite);
+
+  let lista = conferir(await q).map(paraProduto);
+
+  // Ordenação por desconto não existe como coluna: é calculada.
+  if (v?.ordenar) lista.sort(v.ordenar);
+
+  return lista;
 }
 
-/** Produto único por slug. Devolve null quando não existe (a página faz o 404). */
 export async function obterProduto(slug) {
-  return responder(produtos.find((p) => p.slug === slug) ?? null);
+  if (!temSupabase) return local.obterProduto(slug);
+
+  const { data, error } = await supabase
+    .from("produtos")
+    .select(SELECT)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return paraProduto(data);
 }
 
-/** Produtos da mesma categoria, excluindo o atual. */
 export async function listarRelacionados(produto, limite = 4) {
-  const lista = produtos
-    .filter((p) => p.categoria === produto.categoria && p.id !== produto.id)
-    .slice(0, limite);
-  return responder(lista);
+  if (!temSupabase) return local.listarRelacionados(produto, limite);
+
+  const data = conferir(
+    await supabase
+      .from("produtos")
+      .select(SELECT)
+      .eq("ativo", true)
+      .eq("categoria_slug", produto.categoria)
+      .neq("id", produto.id)
+      .limit(limite)
+  );
+
+  return data.map(paraProduto);
 }
 
-/** Produtos em destaque — a vitrine de topo da home (combos). */
 export async function listarDestaques(limite = 10) {
-  return responder(produtos.filter((p) => p.destaque).slice(0, limite));
+  if (!temSupabase) return local.listarDestaques(limite);
+
+  const data = conferir(
+    await supabase
+      .from("produtos")
+      .select(SELECT)
+      .eq("ativo", true)
+      .eq("destaque", true)
+      .order("id")
+      .limit(limite)
+  );
+
+  return data.map(paraProduto);
 }
 
-/** Mais vendidos — itens de giro rápido. */
 export async function listarMaisVendidos(limite = 8) {
-  return responder(produtos.filter((p) => p.mais_vendido).slice(0, limite));
+  if (!temSupabase) return local.listarMaisVendidos(limite);
+
+  const data = conferir(
+    await supabase
+      .from("produtos")
+      .select(SELECT)
+      .eq("ativo", true)
+      .eq("mais_vendido", true)
+      .order("id")
+      .limit(limite)
+  );
+
+  return data.map(paraProduto);
 }
 
-/** Promoções: só produtos com preço riscado, do maior desconto para o menor. */
 export async function listarPromocoes(limite = 8) {
-  const lista = produtos
-    .filter((p) => p.preco_de_centavos && p.preco_de_centavos > p.preco_centavos)
-    .sort((a, b) => {
-      const descA = (a.preco_de_centavos - a.preco_centavos) / a.preco_de_centavos;
-      const descB = (b.preco_de_centavos - b.preco_centavos) / b.preco_de_centavos;
-      return descB - descA;
-    })
+  if (!temSupabase) return local.listarPromocoes(limite);
+
+  const data = conferir(
+    await supabase
+      .from("produtos")
+      .select(SELECT)
+      .eq("ativo", true)
+      .not("preco_de_centavos", "is", null)
+      .limit(200)
+  );
+
+  return data
+    .map(paraProduto)
+    .sort(
+      (a, b) =>
+        (b.preco_de_centavos - b.preco_centavos) / b.preco_de_centavos -
+        (a.preco_de_centavos - a.preco_centavos) / a.preco_de_centavos
+    )
     .slice(0, limite);
-  return responder(lista);
 }
 
 export async function listarCategorias() {
-  return responder(categorias);
+  if (!temSupabase) return local.listarCategorias();
+
+  const data = conferir(await supabase.from("categorias").select("*").order("ordem"));
+  return data;
 }
 
 export async function listarMarcas() {
-  return responder(marcas);
+  if (!temSupabase) return local.listarMarcas();
+
+  const data = conferir(await supabase.from("produtos").select("marca").eq("ativo", true));
+  return [...new Set(data.map((r) => r.marca))].sort((a, b) => a.localeCompare(b, "pt-BR"));
 }
 
-/** Faixa de preço do catálogo inteiro — define os limites do slider do filtro. */
 export async function obterFaixaPreco() {
-  const valores = produtos.map((p) => p.preco_centavos);
-  return responder({ min: Math.min(...valores), max: Math.max(...valores) });
+  if (!temSupabase) return local.obterFaixaPreco();
+
+  const data = conferir(
+    await supabase.from("produtos").select("preco_centavos").eq("ativo", true)
+  );
+  const valores = data.map((r) => r.preco_centavos);
+  return { min: Math.min(...valores), max: Math.max(...valores) };
 }

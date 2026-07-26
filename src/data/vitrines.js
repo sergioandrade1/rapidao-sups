@@ -6,6 +6,11 @@
  * em rotas separadas (/v/:slug) e cada uma carrega sua própria regra de corte.
  *
  * Mexer aqui muda o menu do topo — é o ponto único de edição.
+ *
+ * Cada vitrine traz duas versões da mesma regra:
+ *  - `filtro`: predicado JS, usado no catálogo local (sem Supabase configurado)
+ *  - `aplicar`: a mesma regra como consulta, para o banco filtrar no servidor
+ *    em vez de trazer o catálogo inteiro e descartar no navegador.
  */
 export const vitrines = [
   {
@@ -15,6 +20,7 @@ export const vitrines = [
     subtitulo: "Mais produto, menos por unidade. O melhor custo-benefício da loja.",
     emoji: "📦",
     filtro: (p) => p.categoria === "packs" || /combo|2x/i.test(p.nome),
+    aplicar: (q) => q.or("categoria_slug.eq.packs,nome.ilike.%combo%,nome.ilike.%2x %"),
   },
   {
     slug: "top-20",
@@ -24,6 +30,7 @@ export const vitrines = [
     emoji: "🏆",
     limite: 20,
     filtro: (p) => p.mais_vendido || p.destaque || p.tag === "MAIS VENDIDO",
+    aplicar: (q) => q.or("mais_vendido.is.true,destaque.is.true,tag.eq.MAIS VENDIDO"),
   },
   {
     slug: "promocoes",
@@ -33,6 +40,7 @@ export const vitrines = [
     emoji: "🏷️",
     destaque: true, // pintada de amarelo na barra
     filtro: (p) => p.preco_de_centavos && p.preco_de_centavos > p.preco_centavos,
+    aplicar: (q) => q.not("preco_de_centavos", "is", null),
     ordenar: (a, b) =>
       (b.preco_de_centavos - b.preco_centavos) / b.preco_de_centavos -
       (a.preco_de_centavos - a.preco_centavos) / a.preco_de_centavos,
@@ -44,6 +52,7 @@ export const vitrines = [
     subtitulo: "Acima de R$ 89,99 a entrega é por nossa conta.",
     emoji: "🚚",
     filtro: (p) => p.preco_centavos >= 8999,
+    aplicar: (q) => q.gte("preco_centavos", 8999),
   },
   {
     slug: "novidades",
@@ -52,6 +61,7 @@ export const vitrines = [
     subtitulo: "Os lançamentos mais recentes no estoque.",
     emoji: "✨",
     filtro: (p) => p.tag === "NOVIDADE",
+    aplicar: (q) => q.eq("tag", "NOVIDADE"),
   },
   {
     slug: "ate-50",
@@ -60,6 +70,7 @@ export const vitrines = [
     subtitulo: "Pra completar o pedido e chegar no frete grátis.",
     emoji: "💰",
     filtro: (p) => p.preco_centavos <= 5000,
+    aplicar: (q) => q.lte("preco_centavos", 5000),
   },
 ];
 
