@@ -1,0 +1,10 @@
+# Configuração do projeto Supabase.
+# `project_id` liga esta pasta ao projeto na nuvem.
+
+project_id = "zyqlqjmxlnwdfcwhxuks"
+
+[db]
+major_version = 15
+
+[db.migrations]
+enabled = true
