@@ -1,5 +1,5 @@
 import { supabase, temSupabase } from "../lib/supabase";
-import { paraCentavos } from "../lib/pedido";
+import { acharForma, paraCentavos } from "../lib/pedido";
 
 /**
  * Envio de pedido.
@@ -12,7 +12,6 @@ export async function criarPedido(dados, itens) {
   const payload = {
     cliente_nome: dados.nome.trim(),
     cliente_telefone: dados.telefone,
-    cliente_email: dados.email?.trim() || null,
     cep: dados.cep,
     rua: dados.rua.trim(),
     numero_endereco: dados.numero.trim(),
@@ -21,9 +20,11 @@ export async function criarPedido(dados, itens) {
     cidade: dados.cidade,
     referencia: dados.referencia?.trim() || null,
     forma_pagamento: dados.forma,
-    precisa_troco: dados.forma === "dinheiro" && dados.precisaTroco,
+    precisa_troco: Boolean(acharForma(dados.forma)?.permiteTroco && dados.precisaTroco),
     troco_para_centavos:
-      dados.forma === "dinheiro" && dados.precisaTroco ? paraCentavos(dados.trocoPara) : null,
+      acharForma(dados.forma)?.permiteTroco && dados.precisaTroco
+        ? paraCentavos(dados.trocoPara)
+        : null,
     observacao: dados.observacao?.trim() || null,
     itens: itens.map((i) => ({
       produto_slug: i.slug,

@@ -8,24 +8,36 @@ import { MINIMO_FRETE_GRATIS } from "./frete";
  * precisar guardar no Supabase — por isso esta tela vem antes do backend.
  */
 
-/**
- * Frete cobrado abaixo do mínimo.
- * VALOR PROVISÓRIO — confirmar com a loja. Provavelmente varia por cidade
- * (Recife x São Lourenço da Mata não custam o mesmo).
- */
-export const FRETE_PADRAO_CENTAVOS = 1000;
+/** Frete cobrado abaixo do mínimo. PROVISÓRIO — confirmar com a loja. */
+export const FRETE_PADRAO_CENTAVOS = 999;
+
+/** Acréscimo do cartão parcelado, repassado pela maquininha. */
+export const ACRESCIMO_CARTAO_CENTAVOS = 1499;
 
 export const FORMAS_PAGAMENTO = [
   {
     id: "pix",
     nome: "PIX",
-    detalhe: "Aprovação na hora. O código chega pelo WhatsApp.",
+    detalhe: "Sem acréscimo. O código chega pelo WhatsApp.",
     destaque: true,
   },
-  { id: "credito", nome: "Cartão de crédito", detalhe: "Maquininha na entrega." },
-  { id: "debito", nome: "Cartão de débito", detalhe: "Maquininha na entrega." },
-  { id: "dinheiro", nome: "Dinheiro", detalhe: "Informe se precisa de troco." },
+  {
+    id: "dinheiro_debito",
+    nome: "Dinheiro / Débito",
+    detalhe: "Sem acréscimo. Maquininha na entrega.",
+    permiteTroco: true,
+  },
+  {
+    id: "credito_3x",
+    nome: "Cartão até 3x",
+    detalhe: "Acréscimo de R$ 14,99 cobrado pela maquininha.",
+    acrescimo: ACRESCIMO_CARTAO_CENTAVOS,
+  },
 ];
+
+export function acharForma(id) {
+  return FORMAS_PAGAMENTO.find((f) => f.id === id) ?? null;
+}
 
 /* ---------------------------------- máscaras --------------------------------- */
 
@@ -52,7 +64,10 @@ export function paraCentavos(valor) {
 
 const soDigitos = (v) => String(v ?? "").replace(/\D/g, "");
 
-/** Erros da etapa de identificação, por campo. Objeto vazio = etapa válida. */
+/**
+ * Erros da etapa de identificação, por campo. Objeto vazio = etapa válida.
+ * Só nome e WhatsApp: o pedido é fechado por conversa, e-mail não tem uso.
+ */
 export function validarIdentificacao({ nome, telefone }) {
   const erros = {};
 
@@ -89,9 +104,10 @@ export function validarEntrega({ cep, rua, numero, bairro, cidade }) {
 export function validarPagamento({ forma, precisaTroco, trocoPara }, totalCentavos) {
   const erros = {};
 
-  if (!forma) erros.forma = "Escolha a forma de pagamento";
+  const escolhida = acharForma(forma);
+  if (!escolhida) erros.forma = "Escolha a forma de pagamento";
 
-  if (forma === "dinheiro" && precisaTroco) {
+  if (escolhida?.permiteTroco && precisaTroco) {
     const troco = paraCentavos(trocoPara);
     if (!troco) erros.trocoPara = "Informe o valor";
     else if (troco < totalCentavos) erros.trocoPara = "Valor menor que o total do pedido";
@@ -102,14 +118,17 @@ export function validarPagamento({ forma, precisaTroco, trocoPara }, totalCentav
 
 /* ---------------------------------- totais ---------------------------------- */
 
-export function calcularTotais(subtotalCentavos) {
+/** O acréscimo depende da forma escolhida, então ela entra no cálculo. */
+export function calcularTotais(subtotalCentavos, formaId) {
   const freteGratis = subtotalCentavos >= MINIMO_FRETE_GRATIS;
   const frete = freteGratis ? 0 : FRETE_PADRAO_CENTAVOS;
+  const acrescimo = acharForma(formaId)?.acrescimo ?? 0;
 
   return {
     subtotal: subtotalCentavos,
     frete,
     freteGratis,
-    total: subtotalCentavos + frete,
+    acrescimo,
+    total: subtotalCentavos + frete + acrescimo,
   };
 }

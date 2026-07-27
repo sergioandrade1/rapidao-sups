@@ -1,5 +1,5 @@
 import Campo from "../ui/Campo";
-import { FORMAS_PAGAMENTO } from "../../lib/pedido";
+import { FORMAS_PAGAMENTO, acharForma } from "../../lib/pedido";
 import { brl } from "../../lib/formato";
 
 /** Formata enquanto digita: "1550" -> "R$ 15,50". */
@@ -38,13 +38,20 @@ export default function EtapaPagamento({ dados, aoMudar, erros, total }) {
                   onChange={() => aoMudar("forma", f.id)}
                   className={`mt-0.5 size-4 ${f.destaque ? "accent-zap" : "accent-amarelo"}`}
                 />
-                <span className="min-w-0">
-                  <span
-                    className={`block text-sm font-bold ${
-                      ativo && f.destaque ? "text-zap" : "text-texto"
-                    }`}
-                  >
-                    {f.nome}
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span
+                      className={`text-sm font-bold ${
+                        ativo && f.destaque ? "text-zap" : "text-texto"
+                      }`}
+                    >
+                      {f.nome}
+                    </span>
+                    {f.acrescimo > 0 && (
+                      <span className="shrink-0 text-xs font-bold text-alerta">
+                        + {brl(f.acrescimo)}
+                      </span>
+                    )}
                   </span>
                   <span className="block text-xs text-texto-fraco">{f.detalhe}</span>
                 </span>
@@ -56,7 +63,7 @@ export default function EtapaPagamento({ dados, aoMudar, erros, total }) {
         {erros.forma && <p className="mt-2 text-xs font-semibold text-alerta">{erros.forma}</p>}
       </fieldset>
 
-      {dados.forma === "dinheiro" && (
+      {acharForma(dados.forma)?.permiteTroco && (
         <div className="rounded-xl border border-borda bg-grafite-card p-4">
           <label className="flex cursor-pointer items-center gap-2 text-sm font-bold">
             <input

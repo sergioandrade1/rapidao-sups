@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Check, MessageCircle, ShoppingCart } from "lucide-react";
 import PassoIndicador from "../components/checkout/PassoIndicador";
 import ResumoPedido from "../components/checkout/ResumoPedido";
 import EtapaIdentificacao from "../components/checkout/EtapaIdentificacao";
@@ -10,6 +10,7 @@ import EtapaRevisao from "../components/checkout/EtapaRevisao";
 import { useCarrinho } from "../context/CarrinhoContext";
 import { useTitulo } from "../hooks/useTitulo";
 import { criarPedido } from "../services/pedidos";
+import { linkWhatsAppPedido, montarMensagemPedido } from "../lib/mensagemPedido";
 import { brl } from "../lib/formato";
 import {
   calcularTotais,
@@ -24,7 +25,6 @@ const CHAVE_RASCUNHO = "rapidao:checkout:v1";
 const VAZIO = {
   nome: "",
   telefone: "",
-  email: "",
   cep: "",
   rua: "",
   numero: "",
@@ -61,7 +61,8 @@ export default function Checkout() {
   const [pedido, setPedido] = useState(null);
   const topo = useRef(null);
 
-  const { total } = calcularTotais(subtotal);
+  const totais = calcularTotais(subtotal, dados.forma);
+  const { total } = totais;
 
   useEffect(() => {
     try {
@@ -109,7 +110,16 @@ export default function Checkout() {
 
     try {
       const resultado = await criarPedido(dados, itens);
-      setPedido(resultado);
+
+      // A mensagem é montada ANTES de limpar o carrinho — depois os itens somem.
+      const mensagem = montarMensagemPedido({
+        numero: resultado.numero,
+        dados,
+        itens,
+        totais,
+      });
+
+      setPedido({ ...resultado, mensagem, link: linkWhatsAppPedido(mensagem) });
       limpar();
       // O rascunho some junto: manter endereço salvo depois do pedido feito
       // faria o próximo checkout começar com dados possivelmente velhos.
@@ -141,8 +151,8 @@ export default function Checkout() {
         </p>
 
         <p className="max-w-md text-sm text-texto-suave">
-          Obrigado, {dados.nome.split(" ")[0]}! Guarde esse número — é por ele que a loja localiza
-          seu pedido. A confirmação chega no WhatsApp {dados.telefone}.
+          Falta um passo, {dados.nome.split(" ")[0]}: envie o pedido pra loja no WhatsApp. A
+          mensagem já vai pronta.
         </p>
 
         {pedido.total_centavos && (
@@ -151,13 +161,34 @@ export default function Checkout() {
           </p>
         )}
 
+        {pedido.link ? (
+          <a
+            href={pedido.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-2 rounded-lg bg-zap px-8 py-4 text-base font-extrabold text-white transition-colors hover:bg-zap-escuro"
+          >
+            <MessageCircle size={20} />
+            Enviar pedido no WhatsApp
+          </a>
+        ) : (
+          <div className="w-full max-w-md">
+            <p className="mb-2 rounded-lg border border-borda bg-grafite-card px-4 py-3 text-xs text-texto-fraco">
+              WhatsApp desativado no ambiente de teste. Esta é a mensagem que seria enviada:
+            </p>
+            <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-lg border border-borda bg-preto-fundo p-3 text-left text-[11px] leading-relaxed text-neutral-300">
+              {pedido.mensagem}
+            </pre>
+          </div>
+        )}
+
         {pedido.simulado && (
-          <p className="max-w-md rounded-lg border border-borda bg-grafite-card px-4 py-3 text-xs text-texto-fraco">
-            Banco não configurado neste ambiente: número de exemplo, pedido não gravado.
+          <p className="max-w-md text-xs text-texto-fraco">
+            Banco não configurado: número de exemplo, pedido não gravado.
           </p>
         )}
 
-        <Link to="/produtos" className="btn-primario mt-2">
+        <Link to="/produtos" className="mt-2 text-sm font-bold text-amarelo hover:underline">
           Voltar às compras
         </Link>
       </div>
@@ -237,7 +268,7 @@ export default function Checkout() {
           </form>
         </div>
 
-        <ResumoPedido itens={itens} subtotal={subtotal} />
+        <ResumoPedido itens={itens} subtotal={subtotal} forma={dados.forma} />
       </div>
     </div>
   );

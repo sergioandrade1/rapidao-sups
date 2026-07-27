@@ -1,24 +1,37 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import Badge from "./Badge";
-import ImagemProduto from "./ImagemProduto";
 import Estrelas from "./Estrelas";
+import ImagemProduto from "./ImagemProduto";
 import { brl, percentualDesconto } from "../../lib/formato";
 import { useCarrinho } from "../../context/CarrinhoContext";
 
 /**
  * Card de produto do grid.
- * O hover é todo CSS (`group-hover`) — no protótipo era um useState por card,
- * o que forçava re-render a cada passada de mouse.
+ *
+ * Produto com sabor não vai direto pro carrinho: abre a escolha sobre o card.
+ * Antes ele adicionava a primeira variante em silêncio, e o cliente só
+ * descobria o sabor errado quando o pedido chegava em casa.
  */
 export default function CardProduto({ produto }) {
   const { adicionar } = useCarrinho();
+  const [escolhendo, setEscolhendo] = useState(false);
+
   const desconto = percentualDesconto(produto.preco_de_centavos, produto.preco_centavos);
   const freteGratis = produto.tag === "FRETE GRÁTIS";
-  const semEstoque = produto.estoque === 0;
+  const temSabor = produto.variantes.length > 0;
+  const semEstoque = temSabor
+    ? produto.variantes.every((v) => v.estoque === 0)
+    : produto.estoque === 0;
+
+  function aoClicarAdicionar() {
+    if (temSabor) setEscolhendo(true);
+    else adicionar(produto, null, 1);
+  }
 
   return (
-    <article className="card-superficie group flex flex-col overflow-hidden hover:-translate-y-1 hover:border-amarelo">
+    <article className="card-superficie group relative flex flex-col overflow-hidden hover:-translate-y-1 hover:border-amarelo">
       <Link
         to={`/p/${produto.slug}`}
         className="relative flex h-44 items-center justify-center bg-white p-2"
@@ -54,7 +67,7 @@ export default function CardProduto({ produto }) {
         <Estrelas nota={produto.nota} avaliacoes={produto.avaliacoes} />
 
         <div className="mt-auto pt-2">
-          {/* Espaço reservado mesmo sem desconto, para os cards do grid alinharem */}
+          {/* Altura reservada mesmo sem desconto, para os cards alinharem */}
           <span className="block h-4 text-xs text-texto-tenue line-through">
             {produto.preco_de_centavos ? brl(produto.preco_de_centavos) : ""}
           </span>
@@ -67,11 +80,13 @@ export default function CardProduto({ produto }) {
         <button
           type="button"
           disabled={semEstoque}
-          onClick={() => adicionar(produto, produto.variantes[0] ?? null, 1)}
+          onClick={aoClicarAdicionar}
           className="btn-primario mt-2 w-full py-2.5 disabled:cursor-not-allowed disabled:bg-neutral-700 disabled:text-neutral-400"
         >
           {semEstoque ? (
             "Indisponível"
+          ) : temSabor ? (
+            "Escolher sabor"
           ) : (
             <>
               <Plus size={16} strokeWidth={3} />
@@ -80,6 +95,47 @@ export default function CardProduto({ produto }) {
           )}
         </button>
       </div>
+
+      {/* Escolha de sabor sobre o próprio card */}
+      {escolhendo && (
+        <div className="absolute inset-0 z-10 flex flex-col bg-grafite-card/97 p-3.5 backdrop-blur-sm">
+          <div className="mb-2 flex items-center justify-between">
+            <h4 className="text-[13px] font-extrabold uppercase tracking-widest text-amarelo">
+              Escolha o sabor
+            </h4>
+            <button
+              type="button"
+              onClick={() => setEscolhendo(false)}
+              aria-label="Fechar escolha de sabor"
+              className="text-texto-fraco hover:text-texto"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto">
+            {produto.variantes.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                disabled={v.estoque === 0}
+                onClick={() => {
+                  adicionar(produto, v, 1);
+                  setEscolhendo(false);
+                }}
+                className={`rounded-lg border px-3 py-2 text-left text-sm font-semibold transition-colors ${
+                  v.estoque === 0
+                    ? "cursor-not-allowed border-borda text-texto-tenue line-through"
+                    : "border-borda-clara text-neutral-200 hover:border-amarelo hover:text-amarelo"
+                }`}
+              >
+                {v.rotulo}
+                {v.estoque === 0 && <span className="ml-1 text-[10px]">(esgotado)</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </article>
   );
 }

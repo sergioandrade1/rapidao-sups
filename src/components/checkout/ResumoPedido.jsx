@@ -4,8 +4,8 @@ import { calcularTotais } from "../../lib/pedido";
 import { useJanelaEntrega } from "../../hooks/useJanelaEntrega";
 
 /** Coluna lateral do checkout: itens, totais e previsão de entrega. */
-export default function ResumoPedido({ itens, subtotal }) {
-  const { frete, freteGratis, total } = calcularTotais(subtotal);
+export default function ResumoPedido({ itens, subtotal, forma }) {
+  const { frete, freteGratis, acrescimo, total } = calcularTotais(subtotal, forma);
   const janela = useJanelaEntrega();
 
   const previsao =
@@ -64,6 +64,12 @@ export default function ResumoPedido({ itens, subtotal }) {
               {freteGratis ? "Grátis" : brl(frete)}
             </dd>
           </div>
+          {acrescimo > 0 && (
+            <div className="flex justify-between">
+              <dt className="text-texto-suave">Acréscimo cartão</dt>
+              <dd className="text-alerta">{brl(acrescimo)}</dd>
+            </div>
+          )}
           <div className="mt-1 flex items-baseline justify-between border-t border-borda-sutil pt-3">
             <dt className="font-bold">Total</dt>
             <dd className="text-2xl font-black text-amarelo">{brl(total)}</dd>

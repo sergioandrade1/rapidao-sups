@@ -1,6 +1,6 @@
 /** Regras comerciais de frete. Centralizadas para reuso em carrinho e checkout. */
 
-/** Frete grátis a partir de R$ 89,99 (regra da loja atual). */
+/** Frete grátis a partir de R$ 89,99 — valor anunciado pela loja. */
 export const MINIMO_FRETE_GRATIS = 8999;
 
 /** Quanto falta (em centavos) para o frete grátis. 0 quando já atingiu. */

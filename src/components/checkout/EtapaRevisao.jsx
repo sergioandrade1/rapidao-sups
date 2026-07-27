@@ -1,5 +1,5 @@
 import { Pencil } from "lucide-react";
-import { FORMAS_PAGAMENTO } from "../../lib/pedido";
+import { acharForma } from "../../lib/pedido";
 
 function Bloco({ titulo, aoEditar, children }) {
   return (
@@ -23,7 +23,7 @@ function Bloco({ titulo, aoEditar, children }) {
 }
 
 export default function EtapaRevisao({ dados, aoVoltarPara }) {
-  const forma = FORMAS_PAGAMENTO.find((f) => f.id === dados.forma);
+  const forma = acharForma(dados.forma);
 
   return (
     <div className="flex flex-col gap-3">
@@ -47,7 +47,7 @@ export default function EtapaRevisao({ dados, aoVoltarPara }) {
 
       <Bloco titulo="Pagamento" aoEditar={() => aoVoltarPara(2)}>
         <p className="font-bold text-texto">{forma?.nome}</p>
-        {dados.forma === "dinheiro" && (
+        {forma?.permiteTroco && (
           <p>{dados.precisaTroco ? `Troco para ${dados.trocoPara}` : "Não precisa de troco"}</p>
         )}
         {dados.observacao && (
